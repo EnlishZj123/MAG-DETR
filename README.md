@@ -95,8 +95,8 @@ docker build -t rtdetr-v2:latest .
 训练入口来自 `tools/train.py`，示例：
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
-  torchrun --master_port=9909 --nproc_per_node=4 \
+CUDA_VISIBLE_DEVICES= \
+  torchrun --master_port= --nproc_per_node= \
   tools/train.py -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco.yml \
   --use-amp --seed=0
 ```
