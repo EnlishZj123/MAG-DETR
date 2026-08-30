@@ -32,8 +32,8 @@ RTDETRTransformerv2:
   feat_strides: [8, 16, 32]
   hidden_dim: 256
   num_layers: 6
-  # etf_confusion_classes: [0, 60, 56, 2, 73, 39, 41, 58, 13, 45, 57, 7, 6, 9, 62, 26, 8, 24, 51, 25, 3, 40, 69, 5, 72, 43, 32, 65, 1, 59, 33, 14, 71, 50]
-  etf_confusion_classes: [24, 26, 44, 42, 41, 43, 0, 56, 7, 70, 39, 2, 45, 40, 31, 75, 47, 13, 49, 28, 78]
+  etf_confusion_classes: [0, 60, 56, 2, 73, 39, 41, 58, 13, 45, 57, 7, 6, 9, 62, 26, 8, 24, 51, 25, 3, 40, 69, 5, 72, 43, 32, 65, 1, 59, 33, 14, 71, 50]
+  # etf_confusion_classes: [24, 26, 44, 42, 41, 43, 0, 56, 7, 70, 39, 2, 45, 40, 31, 75, 47, 13, 49, 28, 78]
   etf_scale_init: 10.0
   etf_scale_trainable: true
   etf_seed: 0
