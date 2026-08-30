@@ -1,0 +1,30 @@
+task: detection
+
+evaluator:
+  type: CocoEvaluator
+  iou_types: ['bbox', ]
+
+# Reuse the COCO-80 detector unchanged. CrowdHuman GT is converted to COCO
+# format with a single `person` category.
+num_classes: 80
+remap_mscoco_category: True
+
+train_dataloader: ~
+
+val_dataloader:
+  type: DataLoader
+  dataset:
+    type: CocoDetection
+    img_folder: data/crowdhuman/val2017/Images
+    ann_file: data/crowdhuman/annotations/instances_val2017.json
+    return_masks: False
+    transforms:
+      type: Compose
+      ops:
+        - {type: Resize, size: [640, 640]}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True}
+  shuffle: False
+  num_workers: 8
+  drop_last: False
+  collate_fn:
+    type: BatchImageCollateFunction

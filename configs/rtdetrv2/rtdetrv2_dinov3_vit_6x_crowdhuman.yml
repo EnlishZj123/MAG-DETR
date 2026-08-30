@@ -1,0 +1,11 @@
+__include__:
+  - './rtdetrv2_dinov3_vit_6x_coco_ETF.yml'
+  - '../dataset/crowdhuman_detection.yml'
+
+output_dir: /data2/ZJ_output2/CrowdHuman_eval
+eval_freq: 1
+save_last_freq: 0
+checkpoint_freq: 0
+
+# Validation-only benchmark config.
+# Use with tools/eval_crowdhuman.py and a COCO2017-trained checkpoint.

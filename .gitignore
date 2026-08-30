@@ -1,0 +1,31 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+# Dataset
+/data/
+/dataset/
+
+# Model checkpoints
+/ckpts/
+
+# Experiment outputs
+/runs/
+
+# Images
+/images/
+
+/dinov3/
+
+/tools/figure_outputs/
+
+/tools/figure_outputs_test/
+
+/tools/data_log_txt/
+
+# Model weights
+*.pth
+*.pt
+*.ckpt

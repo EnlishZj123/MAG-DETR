@@ -1,0 +1,63 @@
+__include__: [
+  './rtdetrv2_dinov3_vit_6x_coco.yml',
+  '../dataset/coco2017_5k_detection.yml',
+]
+
+# From-scratch detector training (with official DINOv3 ViT-L frozen backbone)
+output_dir: /data2/ZJ_output2/output20_oco2017_5k_vitl16_numlayers4_fromscratch
+
+# Training horizon (finetune)
+epoches: 70
+checkpoint_freq: 0
+eval_freq: 1
+save_last_freq: 1
+
+eval_spatial_size: [640, 640]
+
+train_dataloader:
+  batch_size: 32
+  num_workers: 32
+  dataset:
+    transforms:
+      ops:
+        - {type: RandomPhotometricDistort, p: 0.5}
+        - {type: RandomZoomOut, fill: 0}
+        - {type: RandomIoUCrop, p: 0.8}
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: RandomHorizontalFlip}
+        - {type: Resize, size: [640, 640]}
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True}
+        - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
+      policy:
+        name: stop_epoch
+        epoch: 50
+        ops: ['RandomPhotometricDistort', 'RandomZoomOut', 'RandomIoUCrop']
+  collate_fn:
+    scales: [576, 608, 640, 640, 672, 704]
+    stop_epoch: 50
+
+# Re-align LR decay for 70-epoch finetuning.
+lr_scheduler:
+  type: MultiStepLR
+  milestones: [50, 63]
+  gamma: 0.1
+
+# Keep baseline criterion without ETF/AMC
+RTDETRCriterionv2:
+  weight_dict: {loss_vfl: 1, loss_bbox: 5, loss_giou: 2}
+  losses: ['vfl', 'boxes']
+
+RTDETRTransformerv2:
+  # IMPORTANT: keep num_levels aligned with 3 input feature maps
+  num_levels: 3
+  num_layers: 4
+  num_points: [4, 4, 4]
+  # Switch decoder cls head between single linear and 2-layer MLP.
+  cls_head_type: mlp  # linear | mlp
+  # Reuse one classifier for all decoder layers.
+  # cls_head_share: true
+  # Freeze encoder/decoder bbox heads during cls-head finetuning.
+  # freeze_bbox_head: true
+  query_select_method: default
+  etf_confusion_classes: []

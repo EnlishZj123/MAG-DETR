@@ -1,0 +1,40 @@
+
+train_dataloader: 
+  dataset: 
+    transforms:
+      ops:
+        - {type: RandomPhotometricDistort, p: 0.5}
+        - {type: RandomZoomOut, fill: 0}
+        - {type: RandomIoUCrop, p: 0.8}
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: RandomHorizontalFlip}
+        - {type: Resize, size: [640, 640], }
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True}   
+        - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
+      policy:
+        name: stop_epoch
+        epoch: 140 # epoch in [71, ~) stop `ops`
+        ops: ['RandomPhotometricDistort', 'RandomZoomOut', 'RandomIoUCrop']
+  
+  collate_fn:
+    type: BatchImageCollateFunction
+    scales: [576, 608, 640, 640, 672, 704]
+    stop_epoch: 140 # epoch in [71, ~) stop `multiscales`
+
+  shuffle: True
+  # Per-process (per-GPU) batch size. If you use DDP, total batch size = batch_size * world_size.
+  batch_size: 48
+  num_workers: 48
+
+
+val_dataloader:
+  dataset: 
+    transforms:
+      ops: 
+        - {type: Resize, size: [640, 640]}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True}   
+  shuffle: False
+  # Per-process (per-GPU) batch size
+  batch_size: 32
+  num_workers: 16

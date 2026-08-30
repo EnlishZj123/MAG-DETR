@@ -1,0 +1,126 @@
+__include__: [
+  './rtdetrv2_r50vd_6x_coco.yml',
+]
+
+# ETF finetune config on top of a converged non-ETF checkpoint.
+# Launch training with: -r path/to/non_etf_best.pth
+# output_dir: /data2/ZJ_output2/Ablation/ETF
+output_dir: /data2/ZJ_output2/Ablation/ETF_amc_0.05
+checkpoint_freq: 0
+eval_freq: 5
+save_last_freq: 1
+
+RTDETR:
+  backbone: IdentityBackbone
+  encoder: DINOv3Encoder
+  decoder: RTDETRTransformerv2
+
+criterion: RTDETRCriterionv2
+postprocessor: RTDETRPostProcessor
+
+IdentityBackbone: {}
+
+DINOv3Encoder:
+  model_name_or_path: ckpts/dinov3_vitl16.pth
+  feature_layers: [7, 15, 23]
+  freeze_backbone: True
+  # pyramid_style: layerwise_fused
+  pyramid_style: layerwise_fused
+
+RTDETRTransformerv2:
+  feat_channels: [256, 256, 256]
+  feat_strides: [8, 16, 32]
+  hidden_dim: 256
+  num_layers: 6
+  etf_confusion_classes: [0, 60, 56, 2, 73, 39, 41, 58, 13, 45, 57, 7, 6, 9, 62, 26, 8, 24, 51, 25, 3, 40, 69, 5, 72, 43, 32, 65, 1, 59, 33, 14, 71, 50]
+  # etf_confusion_classes: [24, 26, 44, 42, 41, 43, 0, 56, 7, 70, 39, 2, 45, 40, 31, 75, 47, 13, 49, 28, 78]
+  etf_scale_init: 10.0
+  etf_scale_trainable: true
+  etf_seed: 0
+  query_select_method: default
+
+
+RTDETRCriterionv2:
+  weight_dict: {loss_vfl: 1, loss_amc: 0.1, loss_bbox: 5, loss_giou: 2}
+  losses: ['vfl', 'boxes', 'amc']
+  amc_distance: cosine
+
+# Finetune horizon
+epoches: 60
+
+# # Early stop disabled when patience <= 0.
+# early_stop_patience: 0
+# early_stop_metric: coco_eval_bbox
+# early_stop_index: 0
+# early_stop_mode: max
+# early_stop_min_delta: 0.001
+
+train_dataloader:
+  dataset:
+    transforms:
+      ops:
+        - {type: RandomPhotometricDistort, p: 0.5}
+        - {type: RandomZoomOut, fill: 0}
+        - {type: RandomIoUCrop, p: 0.8}
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: RandomHorizontalFlip}
+        - {type: Resize, size: [640, 640]}
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True}
+        - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
+      policy:
+        name: stop_epoch
+        # Disable stronger augmentations in the final third.
+        epoch: 40
+        ops: ['RandomPhotometricDistort', 'RandomZoomOut', 'RandomIoUCrop']
+  collate_fn:
+    scales: [576, 608, 640, 640, 672, 704]
+    stop_epoch: 40
+  batch_size: 40
+  num_workers: 64
+  pin_memory: True
+  persistent_workers: True
+  prefetch_factor: 4
+# Lower LR for finetuning from a converged checkpoint.
+optimizer:
+  type: AdamW
+  params:
+    -
+      params: '^(?=.*encoder)(?!.*encoder\\.vit)(?!.*(?:norm|bn)).*$'
+      lr: 0.00004
+    -
+      params: '^(?=.*encoder)(?!.*encoder\\.vit)(?=.*(?:norm|bn)).*$'
+      weight_decay: 0.
+    -
+      params: '^(?=.*decoder)(?!.*(?:norm|bn)).*$'
+      lr: 0.00004
+    -
+      params: '^(?=.*decoder)(?=.*(?:norm|bn)).*$'
+      weight_decay: 0.
+  lr: 0.00004
+  betas: [0.9, 0.999]
+  weight_decay: 0.0001
+
+# Milestones at 0.7/0.9 of total epochs.
+lr_scheduler:
+  type: MultiStepLR
+  milestones: [42, 54]
+  gamma: 0.1
+
+lr_warmup_scheduler:
+  type: LinearWarmup
+  warmup_duration: 200
+
+sync_bn: True
+find_unused_parameters: False
+
+use_amp: True
+scaler:
+  type: GradScaler
+  enabled: True
+
+use_ema: True
+ema:
+  type: ModelEMA
+  decay: 0.9999
+  warmups: 2000

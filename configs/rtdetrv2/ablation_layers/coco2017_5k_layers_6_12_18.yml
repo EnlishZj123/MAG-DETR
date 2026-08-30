@@ -1,0 +1,48 @@
+__include__: [
+  '../rtdetrv2_dinov3_vit_6x_coco2017_5k.yml',
+]
+
+# Three-layer evenly spaced ablation.
+output_dir: /data2/ZJ_output2/Ablation/layers_6_12_18
+
+DINOv3Encoder:
+  feature_layers: [6, 12, 18]
+  pyramid_style: avg
+
+train_dataloader:
+  batch_size: 24
+  num_workers: 32
+  dataset:
+    transforms:
+      ops:
+        - {type: RandomPhotometricDistort, p: 0.5}
+        - {type: RandomZoomOut, fill: 0}
+        - {type: RandomIoUCrop, p: 0.8}
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: RandomHorizontalFlip}
+        - {type: Resize, size: [640, 640]}
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True}
+        - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
+      policy:
+        name: stop_epoch
+        epoch: 35
+        ops: ['RandomPhotometricDistort', 'RandomZoomOut', 'RandomIoUCrop']
+  collate_fn:
+    scales: [576, 608, 640, 640, 672, 704]
+    stop_epoch: 35
+
+# Re-align LR decay for 50-epoch finetuning.
+lr_scheduler:
+  type: MultiStepLR
+  milestones: [35, 45]
+  gamma: 0.1
+
+val_dataloader:
+  batch_size: 24
+  num_workers: 16
+  dataset:
+    transforms:
+      ops:
+        - {type: Resize, size: [640, 640]}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True}
