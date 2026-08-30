@@ -3,7 +3,7 @@
 
 ## 项目简介
 
-本仓库是在 RT-DETRv2 的检测框架上，集成 DINOv3 Vision Transformer 作为特征提取器与多尺度编码器的目标检测项目。核心思路是：使用 DINOv3 作为强视觉主干，并从其中间 Transformer block 中提取多层语义特征；再通过层间融合与上/下采样构建 $P_8$、$P_{16}$、$P_{32}$ 三级特征金字塔，最终送入 RT-DETRv2 的解码器进行端到端目标检测。
+本仓库是在 RT-DETRv2 的检测框架上，集成 DINOv3 Vision Transformer 作为特征提取器与多尺度编码器的目标检测项目。核心思路是：使用 DINOv3 作为强视觉主干，并从其中间 Transformer block 中提取多层语义特征；再通过层间融合与上/下采样构建三级特征金字塔，最终送入 RT-DETRv2 的解码器进行端到端目标检测。
 
 该项目的主要特点包括：
 
@@ -31,7 +31,7 @@
 ├── docker-compose.yml        # 容器编排
 ├── requirements.txt          # Python 依赖
 ├── README.md                 # 项目说明
-└── results_0.jpg             # 生成示例图
+
 ```
 
 
@@ -104,7 +104,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 \
 也可以使用断点恢复：
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES \
   python tools/train.py -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco.yml \
   -r path/to/checkpoint.pth --test-only
 ```
@@ -112,8 +112,8 @@ CUDA_VISIBLE_DEVICES=0 \
 ### 2) 测试 / 验证
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
-  torchrun --master_port=9909 --nproc_per_node=4 \
+CUDA_VISIBLE_DEVICES \
+  torchrun --master_port  --nproc_per_node \
   tools/train.py -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco.yml \
   -r path/to/checkpoint.pth --test-only
 ```
@@ -161,14 +161,6 @@ python references/deploy/rtdetrv2_torch.py \
 - 推理部署：PyTorch / ONNX / TensorRT 参考脚本
 - 评估：pycocotools / faster-coco-eval
 
-从实现上看，整个项目具有以下工程特点：
-
-- Backbone 与 Decoder 分离：`IdentityBackbone` + `DINOv3Encoder` + `RTDETRTransformerv2`；
-- 多尺度金字塔：输出 $P_8$, $P_{16}$, $P_{32}$；
-- 端到端检测：无须 NMS 作为主流程，采用 Transformer 检测头；
-- 研究友好：配置文件已覆盖多个 DINOv3 变体和 ETF/finetune 实验场景。
-
-
 ## 训练与配置说明
 
 主要配置文件位于：
@@ -177,26 +169,9 @@ python references/deploy/rtdetrv2_torch.py \
 configs/rtdetrv2/
 ├── rtdetrv2_dinov3_vit_6x_coco.yml
 ├── rtdetrv2_dinov3_vit_6x_coco_ETF.yml
-├── rtdetrv2_dinov3_vit_6x_coco_ETF_small.yml
-├── rtdetrv2_dinov3_vit_6x_coco_ETF_medium.yml
 └── ...
 ```
 
-其中关键字段包括：
-
-- `RTDETR.backbone: IdentityBackbone`
-- `RTDETR.encoder: DINOv3Encoder`
-- `RTDETR.decoder: RTDETRTransformerv2`
-- `DINOv3Encoder.feature_layers: [7, 15, 23]`
-- `RTDETRTransformerv2.feat_strides: [8, 16, 32]`
-
-这说明特征金字塔最终被设计为：
-
-$$
-P_8, P_{16}, P_{32}
-$$
-
-并在 RT-DETRv2 解码器中被统一引用。
 
 
 ## 贡献指南（Contributing）
@@ -237,11 +212,6 @@ git push origin feature/my-improvement
 - 在 PR 中描述实验结果和复现步骤。
 
 
-## License
-
-当前仓库中未发现独立的 `LICENSE` 文件，因此在使用、复制或再分发前，请先确认项目维护者是否声明了明确许可协议。
-
-如果项目后续补充了许可证文件，优先以仓库中实际存在的 `LICENSE` 为准。
 
 > 说明：本 README 仅用于说明项目结构、安装和使用方式，不能替代正式的开源许可证声明。
 
@@ -250,11 +220,4 @@ git push origin feature/my-improvement
 
 本项目的实现基于 RT-DETRv2 体系结构，并将 DINOv3 视觉主干接入到其多尺度检测流水线中。若你在研究中使用该代码，请保留相关论文和框架来源，并在实验报告中注明模型架构与预训练来源。
 
----
 
-如果你愿意，我还可以继续帮你把这份 README 再改成：
-
-- 中文精简版（适合 GitHub 首页展示）；
-- 英文版（适合开源项目发布）；
-- 带图片/Logo 的正式项目版；
-- 适合作为论文附录的 README 版本。
