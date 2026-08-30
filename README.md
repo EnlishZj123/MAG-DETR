@@ -97,7 +97,7 @@ docker build -t rtdetr-v2:latest .
 ```bash
 CUDA_VISIBLE_DEVICES= \
   torchrun --master_port= --nproc_per_node= \
-  tools/train.py -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco.yml \
+  tools/train.py -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco_ETF.yml \
   --use-amp --seed=0
 ```
 
@@ -105,7 +105,7 @@ CUDA_VISIBLE_DEVICES= \
 
 ```bash
 CUDA_VISIBLE_DEVICES \
-  python tools/train.py -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco.yml \
+  python tools/train.py -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco_ETF.yml \
   -r path/to/checkpoint.pth --test-only
 ```
 
@@ -114,7 +114,7 @@ CUDA_VISIBLE_DEVICES \
 ```bash
 CUDA_VISIBLE_DEVICES \
   torchrun --master_port  --nproc_per_node \
-  tools/train.py -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco.yml \
+  tools/train.py -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco_ETF.yml \
   -r path/to/checkpoint.pth --test-only
 ```
 
@@ -124,7 +124,7 @@ CUDA_VISIBLE_DEVICES \
 
 ```bash
 python references/deploy/rtdetrv2_torch.py \
-  -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco.yml \
+  -c configs/rtdetrv2/rtdetrv2_dinov3_vit_6x_coco_ETF.yml \
   -r path/to/checkpoint.pth \
   -f path/to/image.jpg \
   --device cuda:0 \
